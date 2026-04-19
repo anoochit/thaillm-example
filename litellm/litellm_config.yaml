@@ -1,0 +1,9 @@
+model_list:
+  - model_name: typhoon
+    litellm_params:
+      model: openai/typhoon
+      api_base: http://localhost:8080/v1
+      api_key: "dummy"
+
+litellm_settings:
+  drop_params: true
