@@ -6,6 +6,8 @@ use async_trait::async_trait;
 use futures::stream::{self, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::collections::HashMap;
 
 // ─── Request / Response types (OpenAI-compatible) ────────────────────────────
 
@@ -17,12 +19,50 @@ struct ChatRequest {
     temperature: f32,
     #[serde(skip_serializing_if = "Option::is_none")]
     stream: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tools: Option<Vec<Tool>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ChatMessage {
     role: String,
-    content: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tool_calls: Option<Vec<ToolCall>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tool_call_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Tool {
+    #[serde(rename = "type")]
+    r#type: String,
+    function: FunctionDefinition,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FunctionDefinition {
+    name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+    parameters: Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ToolCall {
+    id: String,
+    #[serde(rename = "type")]
+    r#type: String,
+    function: ToolFunction,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ToolFunction {
+    name: String,
+    arguments: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,6 +104,31 @@ struct StreamChoice {
 struct Delta {
     #[serde(default)]
     content: Option<String>,
+    #[serde(default)]
+    tool_calls: Option<Vec<ToolCallChunk>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ToolCallChunk {
+    index: u32,
+    #[serde(default)]
+    id: Option<String>,
+    #[serde(default)]
+    function: Option<ToolFunctionChunk>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct ToolFunctionChunk {
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    arguments: Option<String>,
+}
+
+struct ToolCallAggregator {
+    id: String,
+    name: String,
+    arguments: String,
 }
 
 // ─── ThaiLLMModel ─────────────────────────────────────────────────────────────
@@ -106,12 +171,14 @@ impl ThaiLLMModel {
     }
 
     /// Override the default max_tokens (2048).
+    #[allow(dead_code)]
     pub fn with_max_tokens(mut self, max_tokens: u32) -> Self {
         self.max_tokens = max_tokens;
         self
     }
 
     /// Override the default temperature (0.3).
+    #[allow(dead_code)]
     pub fn with_temperature(mut self, temperature: f32) -> Self {
         self.temperature = temperature;
         self
@@ -123,25 +190,74 @@ impl ThaiLLMModel {
     fn build_messages(&self, request: &LlmRequest) -> Vec<ChatMessage> {
         let mut messages: Vec<ChatMessage> = Vec::new();
 
-        // Append conversation turns
         for content in &request.contents {
-            let text = content
-                .parts
-                .iter()
-                .filter_map(|p: &Part| p.text())
-                .collect::<Vec<_>>()
-                .join("\n");
-
-            // ADK uses "model" for assistant turns; OpenAI uses "assistant"
             let role = match content.role.as_str() {
                 "model" => "assistant".to_string(),
                 other => other.to_string(),
             };
 
-            messages.push(ChatMessage {
-                role,
-                content: text,
-            });
+            let mut text_parts = Vec::new();
+            let mut tool_calls = Vec::new();
+
+            for part in &content.parts {
+                match part {
+                    Part::Text { text } => {
+                        text_parts.push(text.clone());
+                    }
+                    Part::FunctionCall {
+                        name,
+                        args,
+                        id,
+                        ..
+                    } => {
+                        tool_calls.push(ToolCall {
+                            id: id.clone().unwrap_or_default(),
+                            r#type: "function".to_string(),
+                            function: ToolFunction {
+                                name: name.clone(),
+                                arguments: args.to_string(),
+                            },
+                        });
+                    }
+                    Part::FunctionResponse {
+                        id,
+                        function_response,
+                        ..
+                    } => {
+                        let response_str = serde_json::to_string(function_response).unwrap_or_default();
+                        messages.push(ChatMessage {
+                            role: "tool".to_string(),
+                            content: Some(response_str),
+                            tool_calls: None,
+                            tool_call_id: id.clone(),
+                            name: None,
+                        });
+                    }
+                    _ => {}
+                }
+            }
+
+            if !text_parts.is_empty() || !tool_calls.is_empty() {
+                let content_str = if text_parts.is_empty() {
+                    None
+                } else {
+                    Some(text_parts.join("\n"))
+                };
+
+                let tcs = if tool_calls.is_empty() {
+                    None
+                } else {
+                    Some(tool_calls)
+                };
+
+                messages.push(ChatMessage {
+                    role,
+                    content: content_str,
+                    tool_calls: tcs,
+                    tool_call_id: None,
+                    name: None,
+                });
+            }
         }
 
         messages
@@ -152,7 +268,7 @@ impl ThaiLLMModel {
         match reason {
             Some("stop") => Some(FinishReason::Stop),
             Some("length") => Some(FinishReason::MaxTokens),
-            Some("tool_calls") => Some(FinishReason::Stop), // no tool support yet
+            Some("tool_calls") => Some(FinishReason::Stop),
             _ => None,
         }
     }
@@ -161,12 +277,32 @@ impl ThaiLLMModel {
     async fn complete(&self, request: &LlmRequest) -> Result<LlmResponse, AdkError> {
         let messages = self.build_messages(request);
 
+        let tools = if request.tools.is_empty() {
+            None
+        } else {
+            Some(
+                request
+                    .tools
+                    .iter()
+                    .map(|(name, def)| Tool {
+                        r#type: "function".to_string(),
+                        function: FunctionDefinition {
+                            name: name.clone(),
+                            description: def["description"].as_str().map(|s| s.to_string()),
+                            parameters: def["parameters"].clone(),
+                        },
+                    })
+                    .collect(),
+            )
+        };
+
         let body = ChatRequest {
             model: "/model".to_string(),
             messages,
             max_tokens: self.max_tokens,
             temperature: self.temperature,
             stream: None,
+            tools,
         };
 
         let resp = self
@@ -214,7 +350,23 @@ impl ThaiLLMModel {
             cache_read_input_token_count: None,
         });
 
-        let content = Content::new("model").with_text(&choice.message.content);
+        let mut content = Content::new("model");
+        if let Some(text) = choice.message.content {
+            content = content.with_text(&text);
+        }
+
+        if let Some(tool_calls) = choice.message.tool_calls {
+            for tc in tool_calls {
+                let args: Value = serde_json::from_str(&tc.function.arguments)
+                    .unwrap_or_else(|_| serde_json::json!({}));
+                content.parts.push(Part::FunctionCall {
+                    name: tc.function.name,
+                    args,
+                    id: Some(tc.id),
+                    thought_signature: None,
+                });
+            }
+        }
 
         Ok(LlmResponse {
             content: Some(content),
@@ -232,12 +384,32 @@ impl ThaiLLMModel {
     ) -> Result<LlmResponseStream, AdkError> {
         let messages = self.build_messages(request);
 
+        let tools = if request.tools.is_empty() {
+            None
+        } else {
+            Some(
+                request
+                    .tools
+                    .iter()
+                    .map(|(name, def)| Tool {
+                        r#type: "function".to_string(),
+                        function: FunctionDefinition {
+                            name: name.clone(),
+                            description: def["description"].as_str().map(|s| s.to_string()),
+                            parameters: def["parameters"].clone(),
+                        },
+                    })
+                    .collect(),
+            )
+        };
+
         let body = ChatRequest {
             model: "/model".to_string(),
             messages,
             max_tokens: self.max_tokens,
             temperature: self.temperature,
             stream: Some(true),
+            tools,
         };
 
         let resp = self
@@ -261,51 +433,92 @@ impl ThaiLLMModel {
         // Collect SSE lines and turn each `data: {...}` into an LlmResponse
         let mut byte_stream = resp.bytes_stream();
         let mut buffer = String::new();
-        let mut responses: Vec<Result<LlmResponse, AdkError>> = Vec::new();
+        let mut tool_aggregators: HashMap<u32, ToolCallAggregator> = HashMap::new();
 
-        while let Some(chunk) = byte_stream.next().await {
-            let bytes =
-                chunk.map_err(|e| AdkError::model(format!("ThaiLLM stream error: {e}")))?;
-            buffer.push_str(&String::from_utf8_lossy(&bytes));
+        let stream = async_stream::try_stream! {
+            while let Some(chunk) = byte_stream.next().await {
+                let bytes = chunk.map_err(|e| AdkError::model(format!("ThaiLLM stream error: {e}")))?;
+                buffer.push_str(&String::from_utf8_lossy(&bytes));
 
-            // Process complete SSE lines
-            while let Some(pos) = buffer.find('\n') {
-                let line = buffer[..pos].trim().to_string();
-                buffer = buffer[pos + 1..].to_string();
+                while let Some(pos) = buffer.find('\n') {
+                    let line = buffer[..pos].trim().to_string();
+                    buffer = buffer[pos + 1..].to_string();
 
-                if let Some(data) = line.strip_prefix("data: ") {
-                    if data.trim() == "[DONE]" {
-                        break;
-                    }
-                    match serde_json::from_str::<StreamChunk>(data) {
-                        Ok(chunk) => {
-                            if let Some(choice) = chunk.choices.into_iter().next() {
-                                let text = choice.delta.content.unwrap_or_default();
-                                let finish_reason =
-                                    Self::map_finish_reason(choice.finish_reason.as_deref());
-                                let is_last = finish_reason.is_some();
-                                let content = Content::new("model").with_text(&text);
-
-                                responses.push(Ok(LlmResponse {
-                                    content: Some(content),
-                                    finish_reason,
-                                    partial: !is_last,
-                                    ..Default::default()
-                                }));
-                            }
+                    if let Some(data) = line.strip_prefix("data: ") {
+                        if data.trim() == "[DONE]" {
+                            break;
                         }
-                        Err(e) => {
-                            responses.push(Err(AdkError::model(format!(
-                                "ThaiLLM stream parse error: {e}"
-                            ))));
+                        match serde_json::from_str::<StreamChunk>(data) {
+                            Ok(chunk) => {
+                                if let Some(choice) = chunk.choices.into_iter().next() {
+                                    if let Some(text) = choice.delta.content {
+                                        yield LlmResponse {
+                                            content: Some(Content::new("model").with_text(&text)),
+                                            partial: true,
+                                            ..Default::default()
+                                        };
+                                    }
+
+                                    if let Some(tool_calls) = choice.delta.tool_calls {
+                                        for tc in tool_calls {
+                                            let entry = tool_aggregators.entry(tc.index).or_insert(ToolCallAggregator {
+                                                id: String::new(),
+                                                name: String::new(),
+                                                arguments: String::new(),
+                                            });
+                                            if let Some(id) = tc.id {
+                                                entry.id.push_str(&id);
+                                            }
+                                            if let Some(func) = tc.function {
+                                                if let Some(name) = func.name {
+                                                    entry.name.push_str(&name);
+                                                }
+                                                if let Some(args) = func.arguments {
+                                                    entry.arguments.push_str(&args);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if let Some(reason) = choice.finish_reason.as_deref() {
+                                        let finish_reason = Self::map_finish_reason(Some(reason));
+                                        let mut content = Content::new("model");
+                                        
+                                        if !tool_aggregators.is_empty() {
+                                            let mut sorted_indices: Vec<_> = tool_aggregators.keys().cloned().collect();
+                                            sorted_indices.sort();
+                                            for idx in sorted_indices {
+                                                let agg = tool_aggregators.get(&idx).unwrap();
+                                                let args: Value = serde_json::from_str(&agg.arguments)
+                                                    .unwrap_or_else(|_| serde_json::json!({}));
+                                                content.parts.push(Part::FunctionCall {
+                                                    name: agg.name.clone(),
+                                                    args,
+                                                    id: Some(agg.id.clone()),
+                                                    thought_signature: None,
+                                                });
+                                            }
+                                        }
+
+                                        yield LlmResponse {
+                                            content: if content.parts.is_empty() { None } else { Some(content) },
+                                            finish_reason,
+                                            partial: false,
+                                            ..Default::default()
+                                        };
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                yield Err(AdkError::model(format!("ThaiLLM stream parse error: {e}")))?;
+                            }
                         }
                     }
                 }
             }
-        }
+        };
 
-        let stream: LlmResponseStream = Box::pin(stream::iter(responses));
-        Ok(stream)
+        Ok(Box::pin(stream))
     }
 }
 
@@ -330,4 +543,3 @@ impl Llm for ThaiLLMModel {
         }
     }
 }
-
