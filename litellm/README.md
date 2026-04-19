@@ -32,21 +32,6 @@ curl http://localhost:8080/v1/chat/completions \
   }'
 ```
 
-Test with OpenAI compatible API (Direct Proxy)
-
-
-```bash
-curl http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "typhoon",
-    "messages": [
-      {"role": "user", "content": "สวัสดี"}
-    ],
-    "max_tokens": 100
-  }'
-```
-
 Test with OpenAI compatible API (LiteLLM Proxy)
 
 ```bash
