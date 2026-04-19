@@ -1,0 +1,14 @@
+name: thaillm
+description: A Dart client package for ThaiLLM — a Thai language LLM service provider supporting multiple models (OpenThaiGPT, Pathumma, Typhoon, KBTG).
+version: 0.1.0
+homepage: https://github.com/your-org/thaillm
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  http: ^1.2.0
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0
