@@ -2,21 +2,22 @@
 
 A comprehensive suite of SDKs and tools for interacting with Thai Large Language Models (LLMs). This project provides multi-language support and proxy utilities to simplify the integration of Thai LLM services into various applications.
 
-## Project Structure
+## 📂 Project Structure
 
 This repository is organized into several modules, each catering to different development needs:
 
 | Module | Description | Key Features |
-|---|---|---|
+|:---|:---|:---|
 | [**Dart SDK**](./dart) | A high-level client for Dart and Flutter. | Simple API, Multi-turn chat, Error handling, support for Typhoon, OpenThaiGPT, Pathumma, etc. |
 | [**Rust Agent**](./rust) | An agentic framework built with `adk-rust`. | Custom `ThaiLLM` model trait, Tool support (Weather, Filesystem), CLI & API server modes. |
-| [**LiteLLM Proxy**](./litellm) | OpenAI-compatible proxy layer. | LiteLLM integration for Typhoon, allows using standard OpenAI clients with Thai LLMs. |
+| [**LiteLLM Proxy**](./litellm_proxy) | OpenAI-compatible proxy layer using LiteLLM. | Standardizes various Thai LLM providers into a single OpenAI-compatible endpoint. |
+| [**Python Proxy**](./python_proxy) | Specialized LiteLLM configuration and scripts. | Custom proxy logic for Typhoon and other Thai LLM services. |
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-### Dart/Flutter SDK
+### 🎯 Dart & Flutter SDK
 
-Ideal for mobile and web applications.
+Ideal for building mobile and web applications with native Thai LLM support.
 
 ```bash
 cd dart
@@ -25,39 +26,39 @@ dart pub get
 
 *See [Dart README](./dart/README.md) for usage examples.*
 
-### Rust Agentic Framework
+### 🦀 Rust Agentic Framework
 
 Ideal for building autonomous agents with tool-use capabilities.
 
 ```bash
 cd rust
-# Set your THAILLM_API_KEY in .env
+# Configure THAILLM_API_KEY in .env
 cargo run
 ```
 
 *See [Rust README](./rust/README.md) for more details.*
 
-### LiteLLM Proxy
+### 🐍 Python & LiteLLM Proxy
 
-Provides an OpenAI-compatible API for ThaiLLM models.
+Provides an OpenAI-compatible API for ThaiLLM models, enabling use with existing OpenAI-based tools.
 
 ```bash
-cd litellm
+cd python_proxy
 pip install -r requirements.txt
 python typhoon_proxy.py
 ```
 
-*See [LiteLLM README](./litellm/README.md) for proxy configuration.*
+*See [LiteLLM Proxy README](./litellm_proxy/README.md) and [Python Proxy README](./python_proxy/README.md) for configuration.*
 
-## 🛠️ Supported Models
+## 🛠️ Supported Models & Providers
 
-The SDKs are designed to work with various Thai LLM providers, including:
+The SDKs are designed to work seamlessly with various Thai LLM providers, including:
 
-- **Typhoon** (by SCB 10X)
-- **OpenThaiGPT**
-- **Pathumma** (by NECTEC)
-- **KBTG**
+* **Typhoon** (by SCB 10X)
+* **OpenThaiGPT**
+* **Pathumma** (by NECTEC)
+* **KBTG**
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details (if applicable).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

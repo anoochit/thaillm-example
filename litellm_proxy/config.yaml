@@ -1,0 +1,12 @@
+model_list:
+  - model_name: openthaigpt
+    litellm_params:
+      model: openai//model
+      api_base: http://thaillm.or.th/api/typhoon/v1
+      api_key: dummy
+      extra_headers:
+        apikey: os.environ/THAILLM_API_KEY
+        User-Agent: litellm
+
+general_settings:
+  master_key: dummy
