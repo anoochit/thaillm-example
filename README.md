@@ -10,6 +10,7 @@ This repository is organized into several modules, each catering to different de
 |:---|:---|:---|
 | [**Dart SDK**](./dart) | A high-level client for Dart and Flutter. | Simple API, Multi-turn chat, Error handling, support for Typhoon, OpenThaiGPT, Pathumma, etc. |
 | [**Rust Agent**](./rust) | An agentic framework built with `adk-rust`. | Custom `ThaiLLM` model trait, Tool support (Weather, Filesystem), CLI & API server modes. |
+| [**Rust OpenAI**](./rust_openai) | Rust agent using OpenAI-compatible client. | Uses built-in `adk-rust` OpenAI client for compatible ThaiLLM endpoints. |
 | [**LiteLLM Proxy**](./litellm_proxy) | OpenAI-compatible proxy layer using LiteLLM. | Standardizes various Thai LLM providers into a single OpenAI-compatible endpoint. |
 | [**Python Proxy**](./python_proxy) | Specialized LiteLLM configuration and scripts. | Custom proxy logic for Typhoon and other Thai LLM services. |
 
@@ -28,7 +29,7 @@ dart pub get
 
 ### 🦀 Rust Agentic Framework
 
-Ideal for building autonomous agents with tool-use capabilities.
+Ideal for building autonomous agents with tool-use capabilities using a custom model implementation.
 
 ```bash
 cd rust
@@ -37,6 +38,16 @@ cargo run
 ```
 
 *See [Rust README](./rust/README.md) for more details.*
+
+### 🦀 Rust OpenAI Agent
+
+Ideal for quickly connecting to OpenAI-compatible ThaiLLM endpoints using standard clients.
+
+```bash
+cd rust_openai
+# Configure THAILLM_API_KEY in .env
+cargo run
+```
 
 ### 🐍 Python & LiteLLM Proxy
 
