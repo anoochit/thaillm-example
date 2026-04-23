@@ -1,0 +1,6 @@
+Weather in Bangkok:
+Temperature: 30°C (86°F)
+Feels like: 35°C
+Humidity: 79%
+Wind: 21 km/h
+Conditions: Partly cloudy
