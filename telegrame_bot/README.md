@@ -9,6 +9,8 @@ THAILLM_API_KEY=your-api-key-here
 TELOXIDE_TOKEN=your_telegram_bot_token
 ```
 
+Get your bot token from [@BotFather](https://t.me/BotFather) on Telegram
+
 ## Run the bot
 
 ```bash
