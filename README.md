@@ -15,7 +15,7 @@ This repository is organized into several modules, each catering to different de
 | [**Python Proxy**](./python_proxy) | Specialized LiteLLM configuration and scripts. | Custom proxy logic for Typhoon and other Thai LLM services. |
 | [**Telegram Bot**](./telegrame_bot) | AI-powered Telegram bot with tool use. | Multi-user sessions, Weather & Filesystem tools, built with `adk-rust` and `teloxide`. |
 
-## 🖼️ Screenshots
+## 🖼️ ThaiLLM Telegram Bot Screenshots
 
 <p align="center">
   <img src="screenshots/1777104356256.jpg" alt="ThaiLLM Telegram Bot Preview" width="600">
