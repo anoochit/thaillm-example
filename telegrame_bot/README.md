@@ -2,6 +2,13 @@
 
 ADK-Rust doesn't have a built-in Telegram integration, but you can build a Telegram bot on top of it by combining `adk-rust` with the `teloxide` crate (the standard Telegram bot library for Rust). Here's a complete guide:
 
+## Edit `.env`
+
+```text
+THAILLM_API_KEY=your-api-key-here
+TELOXIDE_TOKEN=your_telegram_bot_token
+```
+
 ## Run the bot
 
 ```bash
@@ -36,14 +43,17 @@ handle_message()                          bot.send_message()
 ## Key Tips
 
 **Switch LLM providers** — just change `adk-model` feature and the client:
+
 ```toml
 adk-rust = { version = "0.6.0", features = ["openai"] }
 ```
+
 ```rust
 let model = OpenAIClient::new(OpenAIConfig::new(api_key, "gpt-4o-mini"))?;
 ```
 
 **Add tools** — attach ADK function tools to your agent:
+
 ```rust
 let agent = LlmAgentBuilder::new("bot")
     .tool(my_custom_tool())
@@ -52,9 +62,9 @@ let agent = LlmAgentBuilder::new("bot")
 ```
 
 **Persistent sessions** — replace `InMemorySessionService` with `SqliteSessionService` from `adk-session` so conversations survive restarts:
+
 ```toml
 adk-session = { version = "0.6.0", features = ["sqlite"] }
 ```
 
 **Webhooks vs polling** — `teloxide` defaults to long polling (easiest for dev). For production, switch to webhooks using `teloxide`'s `axum_no_setup` feature.
-
