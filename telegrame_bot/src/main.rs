@@ -18,7 +18,7 @@ async fn main() -> anyhow::Result<()> {
         AgentRunner::new(agent, sessions.clone(), "telegram")
     );
 
-    bot::run_bot(runner, sessions).await?;
+    bot::run_bot(runner, sessions.clone()).await?;
 
     Ok(())
 }

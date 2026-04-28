@@ -6,28 +6,40 @@ mod weather_tool;
 mod filesystem_tool;
 
 pub fn build_agent() -> anyhow::Result<Arc<dyn Agent>> {
+
+    // Sample for ThaiLLM OpenAI-compatible API
+    // Load the API key from an environment variable
     let api_key = std::env::var("THAILLM_API_KEY")?;
 
+    // Create the OpenAI client with the custom configuration
     let config = OpenAIConfig::compatible(
         &api_key,
         "https://thaillm.or.th/api/v1",
         "typhoon-s-thaillm-8b-instruct",
     );
 
+    // Create the OpenAI client with the custom configuration
     let model = OpenAIClient::new(config)?;
 
+    // Sample for Gemini
+    // let api_key = std::env::var("GOOGLE_API_KEY")?;
+    // let model = GeminiModel::new(&api_key, "gemini-2.5-flash")?;
+
+    // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
         .description("A helpful AI assistant")
         .instruction("You are a friendly assistant. Be concise and helpful. Answer in User language.")
         .model(Arc::new(model));
 
+    // Add weather tools to the agent
     for t in weather_tool::weather_tools() {
         builder = builder.tool(t).into();
     }
-
+    // Add filesystem tools to the agent
     for t in filesystem_tool::filesystem_tools() {
         builder = builder.tool(t).into();
     }
 
+    // Build and return the agent
     Ok(Arc::new(builder.build()?))
 }
