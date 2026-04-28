@@ -68,6 +68,18 @@ python typhoon_proxy.py
 
 *See [LiteLLM Proxy README](./litellm_proxy/README.md) and [Python Proxy README](./python_proxy/README.md) for configuration.*
 
+### 🤖 AI Telegram Bot
+
+An interactive Telegram bot built with Rust that supports multi-user sessions and tool-use (weather, filesystem).
+
+```bash
+cd telegrame_bot
+# Configure THAILLM_API_KEY and TELOXIDE_TOKEN in .env
+cargo run
+```
+
+*See [Telegram Bot README](./telegrame_bot/README.md) for configuration and deployment.*
+
 ## 🛠️ Supported Models & Providers
 
 The SDKs are designed to work seamlessly with various Thai LLM providers, including:
