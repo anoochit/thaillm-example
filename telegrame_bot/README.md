@@ -1,4 +1,4 @@
-## README
+# README
 
 ADK-Rust doesn't have a built-in Telegram integration, but you can build a Telegram bot on top of it by combining `adk-rust` with the `teloxide` crate (the standard Telegram bot library for Rust). Here's a complete guide:
 
