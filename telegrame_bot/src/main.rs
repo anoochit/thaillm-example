@@ -19,9 +19,9 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Bot,
-    Cli,
-    Server,
+    Bot, // telegram bot
+    Cli, // command line interface
+    Server, // http server
 }
 
 #[tokio::main]
@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Bot => {
             let runner = Arc::new(
-                AgentRunner::new(agent, sessions.clone(), "app")
+                AgentRunner::new(agent, sessions.clone(), "telegram")
             );
             bot::run_bot(runner, sessions.clone()).await?;
         }

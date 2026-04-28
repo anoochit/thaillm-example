@@ -4,6 +4,7 @@ use adk_rust::model::{OpenAIClient, OpenAIConfig};
 
 mod weather_tool;
 mod filesystem_tool;
+mod datetime_tool;
 
 pub fn build_agent() -> anyhow::Result<Arc<dyn Agent>> {
 
@@ -28,15 +29,15 @@ pub fn build_agent() -> anyhow::Result<Arc<dyn Agent>> {
     // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
         .description("A helpful AI assistant")
-        .instruction("You are a friendly assistant. Be concise and helpful. Answer in User language.")
+        .instruction("You are a friendly assistant. Be concise and helpful. 
+        Always use the tools when relevant. If you don't know the answer, say you don't know instead of making something up.")
         .model(Arc::new(model));
 
-    // Add weather tools to the agent
-    for t in weather_tool::weather_tools() {
-        builder = builder.tool(t).into();
-    }
-    // Add filesystem tools to the agent
-    for t in filesystem_tool::filesystem_tools() {
+    let mut tools = weather_tool::weather_tools();
+    tools.extend(filesystem_tool::filesystem_tools());
+    tools.extend(datetime_tool::datetime_tools());
+
+    for t in tools {
         builder = builder.tool(t).into();
     }
 
