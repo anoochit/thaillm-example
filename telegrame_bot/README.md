@@ -11,10 +11,26 @@ TELOXIDE_TOKEN=your_telegram_bot_token
 
 Get your bot token from [@BotFather](https://t.me/BotFather) on Telegram
 
-## Run the bot
+## Run the application
+
+The application supports multiple modes:
+
+### Telegram Bot
 
 ```bash
-cargo run
+cargo run -- bot
+```
+
+### Console CLI
+
+```bash
+cargo run -- cli
+```
+
+### HTTP Server
+
+```bash
+cargo run -- server
 ```
 
 ## How it Works
@@ -45,6 +61,7 @@ handle_message()                          bot.send_message()
 ## Workspace Sandbox
 
 The bot includes a filesystem tool that operates within a "workspace" directory. By default, this is located at:
+
 - **`~/workspace`** (in your home directory)
 
 The bot will automatically create this directory if it doesn't exist. Files created by the agent will be stored here.
