@@ -27,13 +27,12 @@ pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
     // let model = OpenAIClient::new(config)?;
 
     // Sample for Gemini
-    let api_key = std::env::var("GOOGLE_API_KEY")
-        .map_err(|_| anyhow::anyhow!("Neither GOOGLE_API_KEY nor THAILLM_API_KEY found in environment"))?;
+    let api_key = std::env::var("GOOGLE_API_KEY")?;
     
     // Log whether we got a key (but not the key itself)
     log::info!("Successfully loaded API key (length: {})", api_key.len());
     
-    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
+    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-pro")?);
 
     // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
@@ -57,10 +56,8 @@ When interacting:
     tools.extend(current_datetime_tool::datetime_tools());
     tools.extend(km_tool::km_tools());
     tools.extend(shell_tool::shell_tools());
-    
-    // Add Google Search Tool **only** Gemini model is used, as it has built-in tool use capabilities. For other models, you may want to implement a custom search tool that calls the API directly.
-    builder = builder.tool(Arc::new(adk_tool::builtin::GoogleSearchTool::new())).into();
-
+ 
+    // Add tools to the agent builder
     for t in tools {
         builder = builder.tool(t).into();
     }

@@ -55,7 +55,7 @@ impl AgentRunner {
 
         let summarizer = Arc::new(LlmEventSummarizer::new(self.model.clone()));
         let compaction_config = EventsCompactionConfig {
-            compaction_interval: 100,
+            compaction_interval: 10,
             overlap_size: 2,
             summarizer,
         };
