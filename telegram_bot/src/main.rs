@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     // shared setup
-    let agent = agent::build_agent()?;
+    let agent = agent::build_agent().await?;
     let sessions = Arc::new(InMemorySessionService::new());
 
     match cli.command {

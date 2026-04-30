@@ -145,6 +145,81 @@ async fn exec_command(args: ExecArgs) -> std::result::Result<Value, AdkError> {
     }))
 }
 
+#[derive(Deserialize, JsonSchema)]
+struct ReplaceArgs {
+    path: String,
+    old_string: String,
+    new_string: String,
+}
+
+#[tool]
+async fn replace_text(args: ReplaceArgs) -> std::result::Result<Value, AdkError> {
+    let path = sandbox(&args.path).await?;
+    let content = fs::read_to_string(&path)
+        .await
+        .map_err(|e| AdkError::tool(format!("Read failed: {}", e)))?;
+
+    if !content.contains(&args.old_string) {
+        return Err(AdkError::tool("Old string not found in file".to_string()));
+    }
+
+    let new_content = content.replace(&args.old_string, &args.new_string);
+    fs::write(&path, new_content)
+        .await
+        .map_err(|e| AdkError::tool(format!("Write failed: {}", e)))?;
+
+    Ok(json!({ "status": "success" }))
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct GrepArgs {
+    pattern: String,
+    include_pattern: Option<String>,
+}
+
+#[tool]
+async fn grep_search(args: GrepArgs) -> std::result::Result<Value, AdkError> {
+    let root = get_workspace_root().await?;
+    let mut command = Command::new("grep");
+    command.arg("-r")
+        .arg(&args.pattern)
+        .arg(".");
+
+    let output = command.current_dir(root)
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(|e| AdkError::tool(e.to_string()))?
+        .wait_with_output()
+        .await
+        .map_err(|e| AdkError::tool(e.to_string()))?;
+
+    Ok(json!({ "results": String::from_utf8_lossy(&output.stdout) }))
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct GlobArgs {
+    pattern: String,
+}
+
+#[tool]
+async fn glob_find(args: GlobArgs) -> std::result::Result<Value, AdkError> {
+    let root = get_workspace_root().await?;
+    let mut command = Command::new("find");
+    command.arg(".")
+        .arg("-name")
+        .arg(&args.pattern);
+
+    let output = command.current_dir(root)
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(|e| AdkError::tool(e.to_string()))?
+        .wait_with_output()
+        .await
+        .map_err(|e| AdkError::tool(e.to_string()))?;
+
+    Ok(json!({ "files": String::from_utf8_lossy(&output.stdout) }))
+}
+
 // ─── Registration ─────────────────────────────────────────────────────────────
 
 pub fn filesystem_tools() -> Vec<Arc<dyn Tool>> {
@@ -153,5 +228,8 @@ pub fn filesystem_tools() -> Vec<Arc<dyn Tool>> {
         Arc::new(WriteFile),
         Arc::new(ListDir),
         Arc::new(ExecCommand),
+        Arc::new(ReplaceText),
+        Arc::new(GrepSearch),
+        Arc::new(GlobFind),
     ]
 }

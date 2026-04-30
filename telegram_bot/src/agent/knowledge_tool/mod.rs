@@ -19,15 +19,15 @@ async fn search_knowledge(args: KnowledgeArgs) -> std::result::Result<Value, Adk
     let workspace_root = get_workspace_root()
         .await
         .map_err(|e| AdkError::tool(format!("Failed to get workspace root: {}", e)))?;
-    let memory_dir = workspace_root.join("MEMORY");
+    let memory_dir = workspace_root.join("memory");
 
     if !memory_dir.exists() {
-        return Ok(json!({"message": "MEMORY directory not found."}));
+        return Ok(json!({"message": "memory directory not found."}));
     }
 
     let mut read_dir = fs::read_dir(memory_dir)
         .await
-        .map_err(|e| AdkError::tool(format!("Failed to read MEMORY directory: {}", e)))?;
+        .map_err(|e| AdkError::tool(format!("Failed to read memory directory: {}", e)))?;
 
     let mut found = false;
     while let Ok(Some(entry)) = read_dir.next_entry().await {
@@ -45,9 +45,9 @@ async fn search_knowledge(args: KnowledgeArgs) -> std::result::Result<Value, Adk
     }
         
     if found {
-        Ok(json!({"message": format!("Found '{}' in MEMORY.", args.query)}))
+        Ok(json!({"message": format!("Found '{}' in memory.", args.query)}))
     } else {
-        Ok(json!({"message": "Information not found in MEMORY."}))
+        Ok(json!({"message": "Information not found in memory."}))
     }
 }
 
