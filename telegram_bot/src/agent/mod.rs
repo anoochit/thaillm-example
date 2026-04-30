@@ -1,6 +1,8 @@
 use std::sync::Arc;
 use adk_rust::prelude::*;
-use adk_rust::model::{OpenAIClient, OpenAIConfig};
+
+// OpenAI-compatible API
+// use adk_rust::model::{OpenAIClient, OpenAIConfig};
 
 pub mod utils;
 pub mod database;
@@ -15,21 +17,21 @@ pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
     // Sample for ThaiLLM OpenAI-compatible API
     // Load the API key from an environment variable
-    let api_key = std::env::var("THAILLM_API_KEY")?;
+    // let api_key = std::env::var("THAILLM_API_KEY")?;
 
     // Create the OpenAI client with the custom configuration
-    let config = OpenAIConfig::compatible(
-        &api_key,
-        "https://thaillm.or.th/api/v1",
-        "typhoon-s-thaillm-8b-instruct",
-    );
+    // let config = OpenAIConfig::compatible(
+    //     &api_key,
+    //     "https://thaillm.or.th/api/v1",
+    //     "typhoon-s-thaillm-8b-instruct",
+    // );
 
     // Create the OpenAI client with the custom configuration
-    let model =  Arc::new(OpenAIClient::new(config)?);
+    // let model =  Arc::new(OpenAIClient::new(config)?);
 
     // Sample for Gemini
-    // let api_key = std::env::var("GOOGLE_API_KEY")?;
-    // let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
+    let api_key = std::env::var("GOOGLE_API_KEY")?;
+    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
 
     // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
