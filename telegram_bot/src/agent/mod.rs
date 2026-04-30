@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use adk_rust::prelude::*;
-// use adk_rust::model::{OpenAIClient, OpenAIConfig};
+use adk_rust::model::{OpenAIClient, OpenAIConfig};
 
 pub mod utils;
 pub mod database;
@@ -9,40 +9,41 @@ pub mod filesystem_tool;
 pub mod km_tool;
 pub mod shell_tool;
 pub mod weather_tool;
+pub mod web_fetch_tool;
 
 pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
     // Sample for ThaiLLM OpenAI-compatible API
     // Load the API key from an environment variable
-    // let api_key = std::env::var("THAILLM_API_KEY")?;
+    let api_key = std::env::var("THAILLM_API_KEY")?;
 
     // Create the OpenAI client with the custom configuration
-    // let config = OpenAIConfig::compatible(
-    //     &api_key,
-    //     "https://thaillm.or.th/api/v1",
-    //     "typhoon-s-thaillm-8b-instruct",
-    // );
+    let config = OpenAIConfig::compatible(
+        &api_key,
+        "https://thaillm.or.th/api/v1",
+        "typhoon-s-thaillm-8b-instruct",
+    );
 
     // Create the OpenAI client with the custom configuration
-    // let model = OpenAIClient::new(config)?;
+    let model =  Arc::new(OpenAIClient::new(config)?);
 
     // Sample for Gemini
-    let api_key = std::env::var("GOOGLE_API_KEY")?;
-    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
+    // let api_key = std::env::var("GOOGLE_API_KEY")?;
+    // let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
 
     // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
         .description("A helpful AI assistant")
-        .instruction("You are a professional, highly capable, and secure AI agent assistant.
-Your core persona is collaborative, proactive, and precise. 
-When interacting:
-1. Always prioritize checking internal knowledge (memory and local docs) and local skills first. Only use external internet searches if you cannot find the answer locally.
-2. Always prioritize tool usage for file operations, system tasks, or memory retrieval.
-3. Be concise but thorough in technical responses.
-4. If an action is requested that you cannot safely perform or do not have tools for, explicitly state the limitation.
-5. If you are unsure of the answer, do not hallucinate; explain what you do know and where the ambiguity lies.
-6. Adhere to security best practices; never expose or log sensitive environment data or credentials.
-7. Whenever you need to present lists or structured data, use a clear Markdown table format if appropriate for readability.")
+        .instruction("You are a professional, secure, and proactive AI Agent assistant. 
+Your goal is to assist the user by executing tasks accurately using your available tools.
+
+Guidelines for Interaction:
+1. Tool-First Approach: Always prioritize using your tools (FileSystem, Weather, Shell, KM, etc.) to perform actions, retrieve data, or verify information.
+2. Knowledge Retrieval: Check internal knowledge (memory, KM tool, and local docs) before relying on general training data.
+3. Precision & Security: Be concise and technically accurate. Never disclose sensitive credentials, API keys, or environment secrets.
+4. Transparency: If a request exceeds your capabilities or toolset, clearly state your limitations. Never hallucinate.
+5. Formatting: Use Markdown for structure. Present structured data in tables when it improves readability.
+6. Final Output: Provide response messages in clear, direct text.")
         .model(model.clone())
         .with_skills_from_root("./skills")?;
 
@@ -52,6 +53,7 @@ When interacting:
     tools.extend(current_datetime_tool::datetime_tools());
     tools.extend(km_tool::km_tools());
     tools.extend(shell_tool::shell_tools());
+    tools.extend(web_fetch_tool::web_fetch_tools());
  
     // Add tools to the agent builder
     for t in tools {
