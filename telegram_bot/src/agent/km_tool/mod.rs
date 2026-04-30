@@ -18,6 +18,28 @@ struct AddKnowledgeArgs {
     content: String,
 }
 
+#[derive(Deserialize, JsonSchema)]
+struct GetKmStatsArgs {}
+
+/// Retrieves statistics about the local Knowledge Management system.
+#[tool]
+async fn get_km_stats(_args: GetKmStatsArgs) -> std::result::Result<Value, AdkError> {
+    let db_manager = DbManager::new().await
+        .map_err(|e| AdkError::tool(format!("Failed to connect to database: {}", e)))?;
+    
+    let conn = db_manager.conn.lock().unwrap();
+
+    let mut stmt = conn.prepare("SELECT COUNT(*) FROM knowledge_items")
+        .map_err(|e| AdkError::tool(format!("Database error: {}", e)))?;
+
+    let count: i64 = stmt.query_row([], |row| row.get(0))
+        .map_err(|e| AdkError::tool(format!("Query error: {}", e)))?;
+
+    Ok(json!({
+        "total_documents": count,
+    }))
+}
+
 /// Searches local Knowledge Management system for information using vector similarity.
 #[tool]
 async fn search_km(args: KmArgs) -> std::result::Result<Value, AdkError> {
@@ -64,5 +86,5 @@ async fn add_knowledge(args: AddKnowledgeArgs) -> std::result::Result<Value, Adk
 }
 
 pub fn km_tools() -> Vec<Arc<dyn Tool>> {
-    vec![Arc::new(SearchKm), Arc::new(AddKnowledge)]
+    vec![Arc::new(SearchKm), Arc::new(AddKnowledge), Arc::new(GetKmStats)]
 }

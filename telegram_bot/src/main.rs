@@ -27,10 +27,14 @@ enum Commands {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
-    pretty_env_logger::init();
-    log::info!("Application starting...");
-
+    
     let cli = Cli::parse();
+    
+    if !matches!(cli.command, Commands::Server) {
+        pretty_env_logger::init();
+    }
+    
+    log::info!("Application starting...");
 
     // shared setup
     log::info!("Building agent...");
@@ -49,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
             bot::run_bot(runner, sessions.clone()).await?;
         }
         Commands::Cli => {
-            cli::run_cli(agent).await?;
+            cli::run_cli(agent, sessions, model).await?;
         }
         Commands::Server => {
             serve::run_serve(agent).await?;

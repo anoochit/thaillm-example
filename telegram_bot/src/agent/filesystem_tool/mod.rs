@@ -10,10 +10,6 @@ use tokio::process::Command;
 use std::process::Stdio;
 use crate::agent::utils::get_workspace_root;
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-// ─── Utilities ────────────────────────────────────────────────────────────────
-
 /// Resolves a user-provided string into a safe path within the workspace.
 async fn sandbox(user_path: &str) -> std::result::Result<PathBuf, AdkError> {
     let root = get_workspace_root().await?;
@@ -55,6 +51,7 @@ struct PathArgs {
     path: String,
 }
 
+/// Reads the contents of a file at the specified path within the workspace.
 #[tool]
 async fn read_file(args: PathArgs) -> std::result::Result<Value, AdkError> {
     let path = sandbox(&args.path).await?;
@@ -71,6 +68,7 @@ struct WriteFileArgs {
     content: String,
 }
 
+/// Writes the provided content to a file at the specified path within the workspace. Creates parent directories if they do not exist.
 #[tool]
 async fn write_file(args: WriteFileArgs) -> std::result::Result<Value, AdkError> {
     let path = sandbox(&args.path).await?;
@@ -87,6 +85,7 @@ async fn write_file(args: WriteFileArgs) -> std::result::Result<Value, AdkError>
     Ok(json!({ "status": "success", "path": args.path }))
 }
 
+/// Lists the names of files and directories within the specified path in the workspace.
 #[tool]
 async fn list_dir(args: PathArgs) -> std::result::Result<Value, AdkError> {
     let path = sandbox(&args.path).await?;
@@ -107,6 +106,7 @@ struct ExecArgs {
     cwd: Option<String>,
 }
 
+/// Executes a shell command within the workspace.
 #[tool]
 async fn exec_command(args: ExecArgs) -> std::result::Result<Value, AdkError> {
     let root = get_workspace_root().await?;
@@ -152,6 +152,7 @@ struct ReplaceArgs {
     new_string: String,
 }
 
+/// Replaces all occurrences of `old_string` with `new_string` in a specified file.
 #[tool]
 async fn replace_text(args: ReplaceArgs) -> std::result::Result<Value, AdkError> {
     let path = sandbox(&args.path).await?;
@@ -177,6 +178,7 @@ struct GrepArgs {
     _include_pattern: Option<String>,
 }
 
+/// Searches for a regular expression pattern within files in the workspace.
 #[tool]
 async fn grep_search(args: GrepArgs) -> std::result::Result<Value, AdkError> {
     let root = get_workspace_root().await?;
@@ -201,6 +203,7 @@ struct GlobArgs {
     pattern: String,
 }
 
+/// Finds files matching a specific glob pattern within the workspace.
 #[tool]
 async fn glob_find(args: GlobArgs) -> std::result::Result<Value, AdkError> {
     let root = get_workspace_root().await?;
