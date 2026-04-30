@@ -73,6 +73,8 @@ The bot supports a directory-based skills system. Skills are automatically loade
 
 - **`greeting`**: Provides warm and professional greetings.
 - **`joke-generator`**: Generates appropriate jokes to lighten the mood.
+- **`system_info`**: Retrieves machine statistics (CPU, memory, disk).
+- **`create-skill`**: Helps the agent create and scaffold new skills.
 
 You can add new skills by creating a new directory in `.skills/` with a `SKILL.md` file in either location.
 
