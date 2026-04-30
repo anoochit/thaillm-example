@@ -174,7 +174,7 @@ async fn replace_text(args: ReplaceArgs) -> std::result::Result<Value, AdkError>
 #[derive(Deserialize, JsonSchema)]
 struct GrepArgs {
     pattern: String,
-    include_pattern: Option<String>,
+    _include_pattern: Option<String>,
 }
 
 #[tool]
