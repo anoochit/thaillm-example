@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use teloxide::{prelude::*, utils::command::BotCommands};
-use adk_session::{DeleteRequest, InMemorySessionService,SessionService};
+use adk_session::{DeleteRequest, SessionService};
 
 use crate::runner::AgentRunner;
 
@@ -15,7 +15,7 @@ enum Command {
 
 pub async fn run_bot(
     runner: Arc<AgentRunner>,
-    sessions: Arc<InMemorySessionService>,
+    sessions: Arc<dyn SessionService>,
 ) -> anyhow::Result<()> {
     let bot = Bot::from_env();
 
@@ -42,7 +42,7 @@ async fn handle_command(
     msg: Message,
     cmd: Command,
     _runner: Arc<AgentRunner>,
-    sessions: Arc<InMemorySessionService>,
+    sessions: Arc<dyn SessionService>,
 ) -> anyhow::Result<()> {
     let chat_id = msg.chat.id.to_string();
 
@@ -68,7 +68,7 @@ async fn handle_message(
     bot: Bot,
     msg: Message,
     runner: Arc<AgentRunner>,
-    _sessions: Arc<InMemorySessionService>,
+    _sessions: Arc<dyn SessionService>,
 ) -> anyhow::Result<()> {
     let Some(text) = msg.text() else { return Ok(()) };
     let chat_id = msg.chat.id.to_string();

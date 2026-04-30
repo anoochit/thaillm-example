@@ -6,7 +6,7 @@ mod serve;
 
 use std::sync::Arc;
 
-use adk_session::InMemorySessionService;
+use adk_session::SqliteSessionService;
 use clap::{Parser, Subcommand};
 use runner::AgentRunner;
 
@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
 
     // shared setup
     let agent = agent::build_agent().await?;
-    let sessions = Arc::new(InMemorySessionService::new());
+    let sessions = Arc::new(SqliteSessionService::new("sessions.db").await?);
 
     match cli.command {
         Commands::Bot => {

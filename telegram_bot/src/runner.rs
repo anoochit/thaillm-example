@@ -4,19 +4,19 @@ use futures::StreamExt;
 use adk_rust::prelude::*;
 use adk_session::{
     CreateRequest, GetRequest,
-    InMemorySessionService,SessionService
+    SessionService
 };
 
 pub struct AgentRunner {
     agent: Arc<dyn Agent>,
-    sessions: Arc<InMemorySessionService>,
+    sessions: Arc<dyn SessionService>,
     app_name: String,
 }
 
 impl AgentRunner {
     pub fn new(
         agent: Arc<dyn Agent>,
-        sessions: Arc<InMemorySessionService>,
+        sessions: Arc<dyn SessionService>,
         app_name: impl Into<String>,
     ) -> Self {
         Self {
