@@ -6,6 +6,7 @@ ADK-Rust doesn't have a built-in Telegram integration, but you can build a Teleg
 
 ```text
 THAILLM_API_KEY=your-api-key-here
+GOOGLE_API_KEY=your-google-api-key-here
 TELOXIDE_TOKEN=your_telegram_bot_token
 ```
 
@@ -48,15 +49,15 @@ handle_message()                          bot.send_message()
      │
      ▼
  adk-rust Runner
-  (per-user session via InMemorySessionService)
+  (per-user session via SqliteSessionService)
      │
      ▼
-  LlmAgent  ──▶  Anthropic / OpenAI / Gemini
+  LlmAgent  ──▶  Gemini / Anthropic / OpenAI
 ```
 
 - **`teloxide`** handles all the Telegram polling and message routing
 - **`adk-rust`** handles the AI agent logic and conversation memory
-- **`InMemorySessionService`** keyed by `chat_id` gives each user their own conversation history
+- **`SqliteSessionService`** keyed by `chat_id` gives each user their own persistent conversation history in `sessions.db`
 
 ## Workspace Sandbox
 
@@ -65,6 +66,15 @@ The bot includes a filesystem tool that operates within a "workspace" directory.
 - **`~/workspace`** (in your home directory)
 
 The bot will automatically create this directory if it doesn't exist. Files created by the agent will be stored here.
+
+## Skills System
+
+The bot supports a directory-based skills system. Any skill defined in the `.skills/` directory will be automatically loaded by the agent.
+
+- **`greeting`**: Provides warm and professional greetings.
+- **`joke-generator`**: Generates appropriate jokes to lighten the mood.
+
+You can add new skills by creating a new directory in `.skills/` with a `SKILL.md` file.
 
 ## Model Context Protocol (MCP) Integration
 
@@ -92,8 +102,15 @@ This bot supports loading external tools via MCP. To use it:
 
 ## Key Tips
 
-**Switch LLM providers** — just change the client configuration in `src/agent.rs`. For example, using ThaiLLM:
+**Switch LLM providers** — just change the client configuration in `src/agent/mod.rs`. 
 
+**Example: Gemini (Default)**
+```rust
+let api_key = std::env::var("GOOGLE_API_KEY")?;
+let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
+```
+
+**Example: ThaiLLM (OpenAI-compatible)**
 ```rust
 let config = OpenAIConfig::compatible(
     &api_key,
@@ -103,7 +120,7 @@ let config = OpenAIConfig::compatible(
 let model = OpenAIClient::new(config)?;
 ```
 
-**Add tools** — attach ADK function tools to your agent in `src/agent.rs`:
+**Add tools** — attach ADK function tools to your agent in `src/agent/mod.rs`:
 
 ```rust
 let mut builder = LlmAgentBuilder::new("agent")
@@ -115,10 +132,6 @@ for t in my_custom_tools() {
 let agent = builder.build()?;
 ```
 
-**Persistent sessions** — replace `InMemorySessionService` with `SqliteSessionService` from `adk-session` so conversations survive restarts:
-
-```toml
-adk-session = { version = "0.7.0", features = ["sqlite"] }
-```
+**Persistent sessions** — The bot uses `SqliteSessionService` by default so conversations survive restarts. The database is stored in `sessions.db`.
 
 **Webhooks vs polling** — `teloxide` defaults to long polling (easiest for dev). For production, switch to webhooks using `teloxide`'s `axum_no_setup` feature.
