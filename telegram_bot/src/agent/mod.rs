@@ -2,9 +2,13 @@ use std::sync::Arc;
 use adk_rust::prelude::*;
 use adk_rust::model::{OpenAIClient, OpenAIConfig};
 
-mod weather_tool;
-mod filesystem_tool;
-mod datetime_tool;
+pub mod utils;
+pub mod datetime_tool;
+pub mod filesystem_tool;
+pub mod knowledge_tool;
+pub mod memory_tool;
+pub mod shell_tool;
+pub mod weather_tool;
 
 pub fn build_agent() -> anyhow::Result<Arc<dyn Agent>> {
 
@@ -33,9 +37,13 @@ pub fn build_agent() -> anyhow::Result<Arc<dyn Agent>> {
         Always use the tools when relevant. If you don't know the answer, say you don't know instead of making something up.")
         .model(Arc::new(model));
 
+    // add tools to the agent
     let mut tools = weather_tool::weather_tools();
     tools.extend(filesystem_tool::filesystem_tools());
     tools.extend(datetime_tool::datetime_tools());
+    tools.extend(knowledge_tool::knowledge_tools());
+    tools.extend(memory_tool::memory_tools());
+    tools.extend(shell_tool::shell_tools());
 
     for t in tools {
         builder = builder.tool(t).into();

@@ -4838,6 +4838,7 @@ dependencies = [
  "adk-session",
  "adk-tool",
  "anyhow",
+ "async-trait",
  "clap",
  "dirs 5.0.1",
  "dotenvy",

@@ -8,30 +8,11 @@ use std::sync::Arc;
 use tokio::fs;
 use tokio::process::Command;
 use std::process::Stdio;
+use crate::agent::utils::get_workspace_root;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const WORKSPACE_NAME: &str = "workspace";
-
-/// Returns the absolute path to the sandbox directory.
-/// Ensures the directory exists on disk.
-async fn get_workspace_root() -> std::result::Result<PathBuf, AdkError> {
-    let home = dirs::home_dir()
-        .ok_or_else(|| AdkError::tool("Failed to get home directory"))?;
-
-    let root = home.join(WORKSPACE_NAME);
-
-    if !root.exists() {
-        fs::create_dir_all(&root)
-            .await
-            .map_err(|e| AdkError::tool(format!("Failed to create workspace: {}", e)))?;
-    }
-
-    // Canonicalize for security checks
-    Ok(fs::canonicalize(&root)
-        .await
-        .unwrap_or(root))
-}
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 /// Resolves a user-provided string into a safe path within the workspace.
 async fn sandbox(user_path: &str) -> std::result::Result<PathBuf, AdkError> {
@@ -134,8 +115,17 @@ async fn exec_command(args: ExecArgs) -> std::result::Result<Value, AdkError> {
         None => root.clone(),
     };
 
-    let output = Command::new("sh")
-        .arg("-c")
+    #[cfg(target_os = "windows")]
+    let mut command = Command::new("cmd.exe");
+    #[cfg(target_os = "windows")]
+    command.arg("/C");
+
+    #[cfg(not(target_os = "windows"))]
+    let mut command = Command::new("sh");
+    #[cfg(not(target_os = "windows"))]
+    command.arg("-c");
+
+    let output = command
         .arg(&args.command)
         .current_dir(&run_dir)
         // Set HOME to workspace to prevent tools from leaking into the host system
