@@ -28,7 +28,6 @@ pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
     // Sample for Gemini
     let api_key = std::env::var("GOOGLE_API_KEY")
-        .or_else(|_| std::env::var("THAILLM_API_KEY"))
         .map_err(|_| anyhow::anyhow!("Neither GOOGLE_API_KEY nor THAILLM_API_KEY found in environment"))?;
     
     // Log whether we got a key (but not the key itself)
@@ -58,6 +57,9 @@ When interacting:
     tools.extend(current_datetime_tool::datetime_tools());
     tools.extend(km_tool::km_tools());
     tools.extend(shell_tool::shell_tools());
+    
+    // Add Google Search Tool **only** Gemini model is used, as it has built-in tool use capabilities. For other models, you may want to implement a custom search tool that calls the API directly.
+    builder = builder.tool(Arc::new(adk_tool::builtin::GoogleSearchTool::new())).into();
 
     for t in tools {
         builder = builder.tool(t).into();
