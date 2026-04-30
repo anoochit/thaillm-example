@@ -75,5 +75,7 @@ Guidelines for Interaction:
     builder = mcp::load_mcp_tools(builder).await?;
 
     // Build and return the agent
-    Ok((Arc::new(builder.build()?), model))
+    let agent = builder.build()?;
+    
+    Ok((Arc::new(agent), model))
 }
