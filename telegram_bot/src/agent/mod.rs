@@ -7,7 +7,6 @@ pub mod database;
 pub mod current_datetime_tool;
 pub mod filesystem_tool;
 pub mod km_tool;
-pub mod memory_tool;
 pub mod shell_tool;
 pub mod weather_tool;
 
@@ -53,7 +52,6 @@ When interacting:
     tools.extend(filesystem_tool::filesystem_tools());
     tools.extend(current_datetime_tool::datetime_tools());
     tools.extend(km_tool::km_tools());
-    tools.extend(memory_tool::memory_tools());
     tools.extend(shell_tool::shell_tools());
 
     for t in tools {
