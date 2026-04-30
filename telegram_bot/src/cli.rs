@@ -1,43 +1,48 @@
-use std::sync::Arc;
-use std::io::{self, Write};
 use futures::StreamExt;
+use std::io::{self, Write};
+use std::sync::Arc;
 
-use adk_rust::Agent;
-use adk_rust::prelude::*;
-use adk_rust::agent::LlmEventSummarizer;
 use adk_runner::EventsCompactionConfig;
-use adk_session::{
-    CreateRequest, GetRequest,
-    SessionService
-};
+use adk_rust::Agent;
+use adk_rust::agent::LlmEventSummarizer;
+use adk_rust::prelude::*;
+use adk_session::{CreateRequest, GetRequest, SessionService};
 
 pub(crate) async fn run_cli(
     agent: Arc<dyn Agent>,
     sessions: Arc<dyn SessionService>,
     model: Arc<dyn Llm>,
 ) -> anyhow::Result<()> {
-    println!(r#"
+    println!(
+        r#"
 Type a message to chat. /exit to quit.
-"#);
+"#
+    );
 
     let app_name = "cli";
     let user_id = "default_user";
     let session_id = "cli_session";
 
     // ensure session exists
-    if sessions.get(GetRequest {
-        app_name: app_name.to_string(),
-        user_id: user_id.to_string(),
-        session_id: session_id.to_string(),
-        num_recent_events: None,
-        after: None,
-    }).await.is_err() {
-        sessions.create(CreateRequest {
+    if sessions
+        .get(GetRequest {
             app_name: app_name.to_string(),
             user_id: user_id.to_string(),
-            session_id: Some(session_id.to_string()),
-            state: Default::default(),
-        }).await?;
+            session_id: session_id.to_string(),
+            num_recent_events: None,
+            after: None,
+        })
+        .await
+        .is_err()
+    {
+        sessions
+            .create(CreateRequest {
+                app_name: app_name.to_string(),
+                user_id: user_id.to_string(),
+                session_id: Some(session_id.to_string()),
+                state: Default::default(),
+            })
+            .await?;
     }
 
     let summarizer = Arc::new(LlmEventSummarizer::new(model.clone()));
@@ -58,13 +63,13 @@ Type a message to chat. /exit to quit.
     loop {
         print!("You> ");
         io::stdout().flush()?;
-        
+
         input.clear();
         let bytes_read = io::stdin().read_line(&mut input)?;
         if bytes_read == 0 {
             break;
         }
-        
+
         let trimmed = input.trim();
         if trimmed.is_empty() {
             continue;
@@ -74,11 +79,9 @@ Type a message to chat. /exit to quit.
         }
 
         let content = Content::new("user").with_text(trimmed);
-        let mut stream = runner
-            .run_str(user_id, session_id, content)
-            .await?;
+        let mut stream = runner.run_str(user_id, session_id, content).await?;
 
-        print!("Agent> ");
+        print!("");
         io::stdout().flush()?;
 
         while let Some(result) = stream.next().await {

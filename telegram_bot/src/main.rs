@@ -1,7 +1,7 @@
 mod agent;
 mod bot;
-mod runner;
 mod cli;
+mod runner;
 mod serve;
 
 use std::sync::Arc;
@@ -19,21 +19,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Bot, // telegram bot
-    Cli, // command line interface
+    Bot,    // telegram bot
+    Cli,    // command line interface
     Server, // http server
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
-    
+
     let cli = Cli::parse();
-    
+
     if !matches!(cli.command, Commands::Server) {
         pretty_env_logger::init();
     }
-    
+
     log::info!("Application starting...");
 
     // shared setup
@@ -47,9 +47,7 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Bot => {
             log::info!("Running in Bot mode");
-            let runner = Arc::new(
-                AgentRunner::new(agent, sessions.clone(), "telegram", model)
-            );
+            let runner = Arc::new(AgentRunner::new(agent, sessions.clone(), "telegram", model));
             bot::run_bot(runner, sessions.clone()).await?;
         }
         Commands::Cli => {
@@ -62,4 +60,3 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-

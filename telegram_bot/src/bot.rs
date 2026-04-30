@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use teloxide::{prelude::*, utils::command::BotCommands};
 use adk_session::{DeleteRequest, SessionService};
+use teloxide::{prelude::*, utils::command::BotCommands};
 
 use crate::runner::AgentRunner;
 
@@ -21,12 +21,12 @@ pub async fn run_bot(
     log::info!("Starting Telegram bot...");
 
     let handler = dptree::entry()
-        .branch(Update::filter_message().filter_command::<Command>().endpoint(
-            handle_command,
-        ))
-        .branch(Update::filter_message().endpoint(
-            handle_message,
-        ));
+        .branch(
+            Update::filter_message()
+                .filter_command::<Command>()
+                .endpoint(handle_command),
+        )
+        .branch(Update::filter_message().endpoint(handle_message));
 
     Dispatcher::builder(bot, handler)
         .dependencies(dptree::deps![runner, sessions])
@@ -53,11 +53,13 @@ async fn handle_command(
             bot.send_message(msg.chat.id, "👋 Hello!").await?;
         }
         Command::Clear => {
-            sessions.delete(DeleteRequest {
-                app_name: "telegram".to_string(),
-                user_id: chat_id.clone(),
-                session_id: chat_id.clone(),
-            }).await?;
+            sessions
+                .delete(DeleteRequest {
+                    app_name: "telegram".to_string(),
+                    user_id: chat_id.clone(),
+                    session_id: chat_id.clone(),
+                })
+                .await?;
 
             bot.send_message(msg.chat.id, "✅ Cleared").await?;
         }
@@ -72,7 +74,9 @@ async fn handle_message(
     runner: Arc<AgentRunner>,
     _sessions: Arc<dyn SessionService>,
 ) -> anyhow::Result<()> {
-    let Some(text) = msg.text() else { return Ok(()) };
+    let Some(text) = msg.text() else {
+        return Ok(());
+    };
     let chat_id = msg.chat.id.to_string();
     log::info!("Received message from {}: {}", chat_id, text);
 
@@ -85,7 +89,8 @@ async fn handle_message(
         }
         Err(e) => {
             log::error!("Error running agent: {:?}", e);
-            bot.send_message(msg.chat.id, "❌ Sorry, an error occurred.").await?;
+            bot.send_message(msg.chat.id, "❌ Sorry, an error occurred.")
+                .await?;
         }
     }
 

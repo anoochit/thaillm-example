@@ -66,6 +66,30 @@ The bot includes a filesystem tool that operates within a "workspace" directory.
 
 The bot will automatically create this directory if it doesn't exist. Files created by the agent will be stored here.
 
+## Model Context Protocol (MCP) Integration
+
+This bot supports loading external tools via MCP. To use it:
+
+1. Create an `mcp.json` file in the root directory (see `mcp.json.example`).
+2. Define your MCP servers in the following format:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/dir"
+      ]
+    }
+  }
+}
+```
+
+3. Restart the bot. It will automatically detect the file, start the servers, and register the tools with the agent.
+
 ## Key Tips
 
 **Switch LLM providers** — just change the client configuration in `src/agent.rs`. For example, using ThaiLLM:

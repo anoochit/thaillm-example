@@ -7,7 +7,7 @@ pub async fn load_mcp_tools(mut builder: LlmAgentBuilder) -> anyhow::Result<LlmA
     if std::path::Path::new("mcp.json").exists() {
         let mcp_manager = McpServerManager::from_json_file("mcp.json")?;
         let mcp_manager = Arc::new(mcp_manager);
-        
+
         // Start all servers and handle potential failures per server
         let results = mcp_manager.start_all().await;
         for (name, res) in results {
@@ -20,6 +20,6 @@ pub async fn load_mcp_tools(mut builder: LlmAgentBuilder) -> anyhow::Result<LlmA
 
         builder = builder.toolset(mcp_manager).into();
     }
-    
+
     Ok(builder)
 }

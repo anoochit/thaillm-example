@@ -1,7 +1,7 @@
+use crate::agent::utils::get_workspace_root;
 use rusqlite::Connection;
 use sqlite_vec::sqlite3_vec_init;
 use std::sync::{Arc, Mutex};
-use crate::agent::utils::get_workspace_root;
 
 pub struct DbManager {
     pub conn: Arc<Mutex<Connection>>,

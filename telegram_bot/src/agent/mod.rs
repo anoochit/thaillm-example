@@ -14,6 +14,7 @@ pub mod weather_tool;
 pub mod web_fetch_tool;
 pub mod mcp;
 
+
 pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
     // Sample for ThaiLLM OpenAI-compatible API
@@ -49,7 +50,7 @@ Guidelines for Interaction:
 6. Language: You MUST always answer and communicate with the user language.
 7. Final Output: Provide response messages in clear, direct text.")
         .model(model.clone())
-        .with_skills_from_root("./skills")?;
+        .with_auto_skills()?;
 
     // add tools to the agent
     let mut tools = weather_tool::weather_tools();

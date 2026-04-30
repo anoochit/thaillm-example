@@ -1,13 +1,10 @@
-use std::sync::Arc;
 use futures::StreamExt;
+use std::sync::Arc;
 
-use adk_rust::prelude::*;
-use adk_rust::agent::LlmEventSummarizer;
 use adk_runner::EventsCompactionConfig;
-use adk_session::{
-    CreateRequest, GetRequest,
-    SessionService
-};
+use adk_rust::agent::LlmEventSummarizer;
+use adk_rust::prelude::*;
+use adk_session::{CreateRequest, GetRequest, SessionService};
 
 pub struct AgentRunner {
     agent: Arc<dyn Agent>,
@@ -38,19 +35,26 @@ impl AgentRunner {
         input: &str,
     ) -> anyhow::Result<String> {
         // ensure session exists
-        if self.sessions.get(GetRequest {
-            app_name: self.app_name.clone(),
-            user_id: user_id.to_string(),
-            session_id: session_id.to_string(),
-            num_recent_events: None,
-            after: None,
-        }).await.is_err() {
-            self.sessions.create(CreateRequest {
+        if self
+            .sessions
+            .get(GetRequest {
                 app_name: self.app_name.clone(),
                 user_id: user_id.to_string(),
-                session_id: Some(session_id.to_string()),
-                state: Default::default(),
-            }).await?;
+                session_id: session_id.to_string(),
+                num_recent_events: None,
+                after: None,
+            })
+            .await
+            .is_err()
+        {
+            self.sessions
+                .create(CreateRequest {
+                    app_name: self.app_name.clone(),
+                    user_id: user_id.to_string(),
+                    session_id: Some(session_id.to_string()),
+                    state: Default::default(),
+                })
+                .await?;
         }
 
         let summarizer = Arc::new(LlmEventSummarizer::new(self.model.clone()));
@@ -69,9 +73,7 @@ impl AgentRunner {
 
         let content = Content::new("user").with_text(input);
 
-        let mut stream = runner
-            .run_str(user_id, session_id, content)
-            .await?;
+        let mut stream = runner.run_str(user_id, session_id, content).await?;
 
         let mut response = String::new();
 
