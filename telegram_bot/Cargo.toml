@@ -29,3 +29,4 @@ rusqlite = { version = "0.31.0", features = ["bundled"] }
 sqlite-vec = "0.1.0"
 zerocopy = { version = "0.8.48", features = ["derive"] }
 log = "0.4.29"
+sysinfo = "0.33.1"

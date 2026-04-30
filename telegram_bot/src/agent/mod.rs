@@ -12,6 +12,7 @@ pub mod km_tool;
 pub mod shell_tool;
 pub mod weather_tool;
 pub mod web_fetch_tool;
+pub mod system_info_tool;
 pub mod mcp;
 
 
@@ -35,6 +36,9 @@ pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
     let api_key = std::env::var("GOOGLE_API_KEY")?;
     let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
 
+    // Get the workspace root
+    let workspace_root = utils::get_workspace_root().await?;
+
     // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
         .description("A helpful AI assistant")
@@ -50,7 +54,8 @@ Guidelines for Interaction:
 6. Language: You MUST always answer and communicate with the user language.
 7. Final Output: Provide response messages in clear, direct text.")
         .model(model.clone())
-        .with_auto_skills()?;
+        .with_skills_from_root(".")?
+        .with_skills_from_root(workspace_root)?;
 
     // add tools to the agent
     let mut tools = weather_tool::weather_tools();
@@ -59,6 +64,7 @@ Guidelines for Interaction:
     tools.extend(km_tool::km_tools());
     tools.extend(shell_tool::shell_tools());
     tools.extend(web_fetch_tool::web_fetch_tools());
+    tools.extend(system_info_tool::system_info_tools());
  
     // Add tools to the agent builder
     for t in tools {
