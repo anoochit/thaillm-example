@@ -12,6 +12,7 @@ pub mod km_tool;
 pub mod shell_tool;
 pub mod weather_tool;
 pub mod web_fetch_tool;
+pub mod mcp;
 
 pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
@@ -45,7 +46,7 @@ Guidelines for Interaction:
 3. Precision & Security: Be concise and technically accurate. Never disclose sensitive credentials, API keys, or environment secrets.
 4. Transparency: If a request exceeds your capabilities or toolset, clearly state your limitations. Never hallucinate.
 5. Formatting: Use Markdown for structure. Present structured data in tables when it improves readability.
-6. Language: You MUST always answer and communicate with the user in Thai language.
+6. Language: You MUST always answer and communicate with the user language.
 7. Final Output: Provide response messages in clear, direct text.")
         .model(model.clone())
         .with_skills_from_root("./skills")?;
@@ -62,6 +63,9 @@ Guidelines for Interaction:
     for t in tools {
         builder = builder.tool(t).into();
     }
+
+    // Load MCP tools from mcp.json if it exists
+    builder = mcp::load_mcp_tools(builder).await?;
 
     // Build and return the agent
     Ok((Arc::new(builder.build()?), model))

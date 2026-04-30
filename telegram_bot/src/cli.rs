@@ -17,16 +17,7 @@ pub(crate) async fn run_cli(
     model: Arc<dyn Llm>,
 ) -> anyhow::Result<()> {
     println!(r#"
-    ╔═════════════════════════════════════════════════╗
-    ║                ADK-Rust  v0.7.0                 ║
-    ║           Rust Agent Development Kit            ║
-    ╚═════════════════════════════════════════════════╝
-
-  Agent    : agent
-  Runtime  : Tokio async, streaming responses
-  Features : tool calling, multi-provider, multi-agent, think blocks
-
-  Type a message to chat. /exit to quit.
+Type a message to chat. /exit to quit.
 "#);
 
     let app_name = "cli";
