@@ -28,11 +28,7 @@ pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
     // Sample for Gemini
     let api_key = std::env::var("GOOGLE_API_KEY")?;
-    
-    // Log whether we got a key (but not the key itself)
-    log::info!("Successfully loaded API key (length: {})", api_key.len());
-    
-    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-pro")?);
+    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
 
     // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
