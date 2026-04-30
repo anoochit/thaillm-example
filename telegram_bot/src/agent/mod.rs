@@ -3,7 +3,7 @@ use adk_rust::prelude::*;
 use adk_rust::model::{OpenAIClient, OpenAIConfig};
 
 pub mod utils;
-pub mod datetime_tool;
+pub mod current_datetime_tool;
 pub mod filesystem_tool;
 pub mod knowledge_tool;
 pub mod memory_tool;
@@ -42,12 +42,12 @@ When interacting:
 4. If you are unsure of the answer, do not hallucinate; explain what you do know and where the ambiguity lies.
 5. Adhere to security best practices; never expose or log sensitive environment data or credentials.")
         .model(Arc::new(model))
-        .with_skills_from_root(".")?;
+        .with_skills_from_root("./skills")?;
 
     // add tools to the agent
     let mut tools = weather_tool::weather_tools();
     tools.extend(filesystem_tool::filesystem_tools());
-    tools.extend(datetime_tool::datetime_tools());
+    tools.extend(current_datetime_tool::datetime_tools());
     tools.extend(knowledge_tool::knowledge_tools());
     tools.extend(memory_tool::memory_tools());
     tools.extend(shell_tool::shell_tools());
