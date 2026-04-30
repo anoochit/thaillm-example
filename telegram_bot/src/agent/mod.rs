@@ -10,7 +10,7 @@ pub mod km_tool;
 pub mod shell_tool;
 pub mod weather_tool;
 
-pub async fn build_agent() -> anyhow::Result<Arc<dyn Agent>> {
+pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
     // Sample for ThaiLLM OpenAI-compatible API
     // Load the API key from an environment variable
@@ -27,8 +27,14 @@ pub async fn build_agent() -> anyhow::Result<Arc<dyn Agent>> {
     // let model = OpenAIClient::new(config)?;
 
     // Sample for Gemini
-    let api_key = std::env::var("GOOGLE_API_KEY")?;
-    let model = GeminiModel::new(&api_key, "gemini-2.5-flash")?;
+    let api_key = std::env::var("GOOGLE_API_KEY")
+        .or_else(|_| std::env::var("THAILLM_API_KEY"))
+        .map_err(|_| anyhow::anyhow!("Neither GOOGLE_API_KEY nor THAILLM_API_KEY found in environment"))?;
+    
+    // Log whether we got a key (but not the key itself)
+    log::info!("Successfully loaded API key (length: {})", api_key.len());
+    
+    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
 
     // Build the agent with the model and tools
     let mut builder = LlmAgentBuilder::new("agent")
@@ -42,9 +48,8 @@ When interacting:
 4. If an action is requested that you cannot safely perform or do not have tools for, explicitly state the limitation.
 5. If you are unsure of the answer, do not hallucinate; explain what you do know and where the ambiguity lies.
 6. Adhere to security best practices; never expose or log sensitive environment data or credentials.
-7. Whenever you need to present lists or structured data, use a clear Markdown table format if appropriate for readability.
-8. Maintain a compact, high-level summary of the conversation thread. Frequently synthesize past interactions into concise summaries to ensure the context window remains efficient for long-running sessions.")
-        .model(Arc::new(model))
+7. Whenever you need to present lists or structured data, use a clear Markdown table format if appropriate for readability.")
+        .model(model.clone())
         .with_skills_from_root("./skills")?;
 
     // add tools to the agent
@@ -59,5 +64,5 @@ When interacting:
     }
 
     // Build and return the agent
-    Ok(Arc::new(builder.build()?))
+    Ok((Arc::new(builder.build()?), model))
 }

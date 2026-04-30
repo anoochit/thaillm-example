@@ -5316,6 +5316,7 @@ dependencies = [
  "dirs",
  "dotenvy",
  "futures",
+ "log",
  "pretty_env_logger",
  "reqwest 0.13.3",
  "rusqlite",

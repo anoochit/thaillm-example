@@ -2,6 +2,8 @@ use std::sync::Arc;
 use futures::StreamExt;
 
 use adk_rust::prelude::*;
+use adk_rust::agent::LlmEventSummarizer;
+use adk_runner::EventsCompactionConfig;
 use adk_session::{
     CreateRequest, GetRequest,
     SessionService
@@ -11,6 +13,7 @@ pub struct AgentRunner {
     agent: Arc<dyn Agent>,
     sessions: Arc<dyn SessionService>,
     app_name: String,
+    model: Arc<dyn Llm>,
 }
 
 impl AgentRunner {
@@ -18,11 +21,13 @@ impl AgentRunner {
         agent: Arc<dyn Agent>,
         sessions: Arc<dyn SessionService>,
         app_name: impl Into<String>,
+        model: Arc<dyn Llm>,
     ) -> Self {
         Self {
             agent,
             sessions,
             app_name: app_name.into(),
+            model,
         }
     }
 
@@ -48,10 +53,18 @@ impl AgentRunner {
             }).await?;
         }
 
+        let summarizer = Arc::new(LlmEventSummarizer::new(self.model.clone()));
+        let compaction_config = EventsCompactionConfig {
+            compaction_interval: 100,
+            overlap_size: 2,
+            summarizer,
+        };
+
         let runner = Runner::builder()
             .app_name(&self.app_name)
             .agent(self.agent.clone())
             .session_service(self.sessions.clone())
+            .compaction_config(compaction_config)
             .build()?;
 
         let content = Content::new("user").with_text(input);

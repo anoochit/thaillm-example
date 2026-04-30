@@ -5,7 +5,7 @@ use adk_session::{DeleteRequest, SessionService};
 
 use crate::runner::AgentRunner;
 
-#[derive(BotCommands, Clone)]
+#[derive(BotCommands, Clone, Debug)]
 #[command(rename_rule = "lowercase")]
 enum Command {
     Start,
@@ -18,6 +18,7 @@ pub async fn run_bot(
     sessions: Arc<dyn SessionService>,
 ) -> anyhow::Result<()> {
     let bot = Bot::from_env();
+    log::info!("Starting Telegram bot...");
 
     let handler = dptree::entry()
         .branch(Update::filter_message().filter_command::<Command>().endpoint(
@@ -45,6 +46,7 @@ async fn handle_command(
     sessions: Arc<dyn SessionService>,
 ) -> anyhow::Result<()> {
     let chat_id = msg.chat.id.to_string();
+    log::info!("Received command: {:?} from {}", cmd, chat_id);
 
     match cmd {
         Command::Start | Command::Help => {
@@ -72,15 +74,20 @@ async fn handle_message(
 ) -> anyhow::Result<()> {
     let Some(text) = msg.text() else { return Ok(()) };
     let chat_id = msg.chat.id.to_string();
+    log::info!("Received message from {}: {}", chat_id, text);
 
     bot.send_chat_action(msg.chat.id, teloxide::types::ChatAction::Typing)
         .await?;
 
-    let response = runner
-        .run(&chat_id, &chat_id, text)
-        .await?;
-
-    bot.send_message(msg.chat.id, response).await?;
+    match runner.run(&chat_id, &chat_id, text).await {
+        Ok(response) => {
+            bot.send_message(msg.chat.id, response).await?;
+        }
+        Err(e) => {
+            log::error!("Error running agent: {:?}", e);
+            bot.send_message(msg.chat.id, "❌ Sorry, an error occurred.").await?;
+        }
+    }
 
     Ok(())
 }

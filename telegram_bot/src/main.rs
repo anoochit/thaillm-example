@@ -27,18 +27,24 @@ enum Commands {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
-    // pretty_env_logger::init();
+    pretty_env_logger::init();
+    log::info!("Application starting...");
 
     let cli = Cli::parse();
 
     // shared setup
-    let agent = agent::build_agent().await?;
-    let sessions = Arc::new(SqliteSessionService::new("sessions.db").await?);
+    log::info!("Building agent...");
+    let (agent, model) = agent::build_agent().await?;
+    log::info!("Agent built successfully.");
+    let sessions = SqliteSessionService::new("sessions.db?mode=rwc").await?;
+    sessions.migrate().await?;
+    let sessions = Arc::new(sessions);
 
     match cli.command {
         Commands::Bot => {
+            log::info!("Running in Bot mode");
             let runner = Arc::new(
-                AgentRunner::new(agent, sessions.clone(), "telegram")
+                AgentRunner::new(agent, sessions.clone(), "telegram", model)
             );
             bot::run_bot(runner, sessions.clone()).await?;
         }
