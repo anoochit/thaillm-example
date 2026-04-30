@@ -69,18 +69,18 @@ The bot will automatically create this directory if it doesn't exist. Files crea
 
 ## Skills System
 
-The bot supports a directory-based skills system. Any skill defined in the `.skills/` directory will be automatically loaded by the agent.
+The bot supports a directory-based skills system. Skills are automatically loaded from the `.skills/` directory in both the **project root** and the **workspace directory**.
 
 - **`greeting`**: Provides warm and professional greetings.
 - **`joke-generator`**: Generates appropriate jokes to lighten the mood.
 
-You can add new skills by creating a new directory in `.skills/` with a `SKILL.md` file.
+You can add new skills by creating a new directory in `.skills/` with a `SKILL.md` file in either location.
 
 ## Model Context Protocol (MCP) Integration
 
 This bot supports loading external tools via MCP. To use it:
 
-1. Create an `mcp.json` file in the root directory (see `mcp.json.example`).
+1. Create an `mcp.json` file in the **workspace directory** (recommended) or the **root directory** (see `mcp.json.example`). The workspace version takes precedence.
 2. Define your MCP servers in the following format:
 
 ```json
@@ -102,15 +102,17 @@ This bot supports loading external tools via MCP. To use it:
 
 ## Key Tips
 
-**Switch LLM providers** — just change the client configuration in `src/agent/mod.rs`. 
+**Switch LLM providers** — just change the client configuration in `src/agent/mod.rs`.
 
 **Example: Gemini (Default)**
+
 ```rust
 let api_key = std::env::var("GOOGLE_API_KEY")?;
 let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
 ```
 
 **Example: ThaiLLM (OpenAI-compatible)**
+
 ```rust
 let config = OpenAIConfig::compatible(
     &api_key,
