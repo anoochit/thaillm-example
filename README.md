@@ -78,7 +78,7 @@ cd telegram_bot
 cargo run
 ```
 
-*See [Telegram Bot README](./telegrame_bot/README.md) for configuration and deployment.*
+*See [Telegram Bot README](./telegram_bot/README.md) for configuration and deployment.*
 
 ## 🛠️ Supported Models & Providers
 
