@@ -1,6 +1,7 @@
 use futures::StreamExt;
 use std::io::{self, Write};
 use std::sync::Arc;
+use termimad::MadSkin;
 
 use adk_runner::EventsCompactionConfig;
 use adk_rust::Agent;
@@ -60,6 +61,8 @@ Type a message to chat. /exit to quit.
         .build()?;
 
     let mut input = String::new();
+    let mut response_buffer = String::new();
+    let skin = MadSkin::default();
     loop {
         print!("You> ");
         io::stdout().flush()?;
@@ -81,7 +84,8 @@ Type a message to chat. /exit to quit.
         let content = Content::new("user").with_text(trimmed);
         let mut stream = runner.run_str(user_id, session_id, content).await?;
 
-        print!("");
+        response_buffer.clear();
+        print!("Agent> ");
         io::stdout().flush()?;
 
         while let Some(result) = stream.next().await {
@@ -90,13 +94,14 @@ Type a message to chat. /exit to quit.
             if let Some(content) = &event.llm_response.content {
                 for part in &content.parts {
                     if let Some(text) = part.text() {
-                        print!("{}", text);
-                        io::stdout().flush()?;
+                        response_buffer.push_str(text);
                     }
                 }
             }
         }
-        println!("\n");
+        println!();
+        skin.print_text(&response_buffer);
+        println!();
     }
 
     Ok(())
