@@ -2,7 +2,7 @@ use std::sync::Arc;
 use adk_rust::prelude::*;
 
 // OpenAI-compatible API
-// use adk_rust::model::{OpenAIClient, OpenAIConfig};
+use adk_rust::model::{OpenAIClient, OpenAIConfig};
 
 pub mod utils;
 pub mod database;
@@ -20,22 +20,25 @@ pub async fn build_agent() -> anyhow::Result<(Arc<dyn Agent>, Arc<dyn Llm>)> {
 
     // Sample for ThaiLLM OpenAI-compatible API
     // Load the API key from an environment variable
-    // let api_key = std::env::var("THAILLM_API_KEY")?;
+    let api_key = std::env::var("THAILLM_API_KEY")?;
 
     // Create the OpenAI client with the custom configuration
-    // let config = OpenAIConfig::compatible(
-    //     &api_key,
-    //     "https://thaillm.or.th/api/v1",
-    //     "typhoon-s-thaillm-8b-instruct",
-    // );
+    let config = OpenAIConfig::compatible(
+        &api_key,
+        "https://thaillm.or.th/api/v1",
+        "typhoon-s-thaillm-8b-instruct",
+    );
 
     // Create the OpenAI client with the custom configuration
-    // let model =  Arc::new(OpenAIClient::new(config)?);
+    let model =  Arc::new(OpenAIClient::new(config)?);
 
     // Sample for Gemini
-    let api_key = std::env::var("GOOGLE_API_KEY")?;
-    let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
+    // let api_key = std::env::var("GOOGLE_API_KEY")?;
+    // let model = Arc::new(GeminiModel::new(&api_key, "gemini-2.5-flash")?);
 
+    // Get the current project root path
+    let project_root = std::env::current_dir()?;
+    
     // Get the workspace root
     let workspace_root = utils::get_workspace_root().await?;
 
@@ -52,9 +55,9 @@ Guidelines for Interaction:
 4. Transparency: If a request exceeds your capabilities or toolset, clearly state your limitations. Never hallucinate.
 5. Formatting: Use Markdown for structure. Present structured data in tables when it improves readability.
 6. Language: You MUST always answer and communicate with the user language.
-7. Final Output: Provide response messages in clear, direct text.")
+7. Final Output: Provide response messages in clear, direct text, table.")
         .model(model.clone())
-        .with_skills_from_root(".")?
+        .with_skills_from_root(project_root)?
         .with_skills_from_root(workspace_root)?;
 
     // add tools to the agent

@@ -1,6 +1,6 @@
 ---
 name: greeting
-description: Create a warm, professional greeting message for the user. Use when starting a new session or when the user greets the agent.
+description: Use this skill when initiating a new conversation, responding to a user's initial greeting, or establishing an agent persona during the first interaction. It ensures the greeting is professional, context-aware, and helpful.
 ---
 
 # Greeting

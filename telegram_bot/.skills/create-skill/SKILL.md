@@ -1,48 +1,50 @@
 ---
 name: create-skill
-description: Use this skill when the user wants to create a new skill for the agent. It provides a template and instructions for scaffolding a skill in the `.skills/` directory.
+description: Use this skill when you want to define a new, specialized persona, workflow, or set of reusable instructions. It scaffolds a new directory under `.skills/` to encapsulate the expertise needed for recurring, complex tasks.
+allowed-tools:
+  - read_file
+  - write_file
+  - list_dir
+  - exec_command
+  - glob_find
 ---
 
 # Create Skill
 
 ## Overview
-This skill empowers you to create new, specialized skills for yourself or other agents. A "skill" consists of a dedicated directory under `.skills/` containing a `SKILL.md` file that defines your persona, goals, and behavioral guidelines for specific tasks.
+This skill automates the creation of modular "capabilities." By formalizing a task into a skill, you ensure consistent behavior and high-quality outputs for specialized workflows.
 
 ## Workflow
 
-1.  **Understand the Skill Goal**: Ask the user for the name and purpose of the new skill if not clearly provided.
-2.  **Determine Location**:
-    *   **Workspace**: `~/workspace/.skills/<skill-name>/` (For user-specific, dynamic skills).
-    *   *Default to Workspace*
-3.  **Prepare the Content**: Use the template below to draft the `SKILL.md` content.
-4.  **Execute**:
-    *   Use the `write_file` tool to create the directory and the `SKILL.md` file.
-    *   Path example: `.skills/my-new-skill/SKILL.md`.
+1.  **Requirement Gathering**: Identify the core objective. If the user is vague, propose a name and description before writing.
+2.  **Conflict Check**: Use `list_dir` on `.skills/` to ensure the `<skill-name>` doesn't already exist to avoid overwriting existing logic.
+3.  **Drafting**: Populate the `SKILL.md` using the template below. 
+    *   **Logic Check**: Ensure the `description` in the frontmatter contains "trigger keywords" that help an LLM know when to call this skill.
+4.  **Execution**:
+    *   Create the directory: `.skills/<kebab-case-name>/`.
+    *   Write the file: `.skills/<kebab-case-name>/SKILL.md`.
+5.  **Verification**: Confirm the file exists and summarize the new "superpower" to the user.
 
 ## SKILL.md Template
-
 ```markdown
 ---
-name: <skill-name>
-description: <A concise 1-2 sentence description of what this skill does and when to use it.>
+name: <kebab-case-name>
+description: <Critical for discovery. Use: "Use this skill when..." followed by specific triggers.>
 ---
 
 # <Display Name>
 
-## Overview
-<Detailed explanation of the skill's purpose.>
+## Persona & Context
+<Define the specific 'hat' agent wears. Is it a Senior Dev? A Creative Writer? Skeptical Auditor?>
 
-## Guidelines
-1. <Guideline 1>
-2. <Guideline 2>
-3. ...
+## Core Objectives
+* <Objective 1: The primary goal.>
+* <Objective 2: What success looks like.>
 
-## Examples
-* <Example interaction or output 1>
-* <Example interaction or output 2>
-```
+## Constraints & Guidelines
+1. **Constraint 1**: (e.g., "Always use TypeScript," "Never mention X.")
+2. **Behavior 2**: (e.g., "Be concise and use Markdown tables for comparisons.")
+3. **Step-by-Step**: (e.g., "Always validate the input before processing.")
 
-## Tips
-*   Keep the `description` in the frontmatter high-signal; it helps the agent (and you!) decide when to activate this skill.
-*   Ensure the directory name is `kebab-case`.
-*   Always confirm with the user after the skill is successfully created.
+## Evaluation Criteria
+- How should the user or agent know if this skill performed correctly?

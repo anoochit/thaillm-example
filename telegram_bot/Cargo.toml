@@ -31,3 +31,4 @@ zerocopy = { version = "0.8.48", features = ["derive"] }
 log = "0.4.29"
 sysinfo = "0.33.1"
 termimad = "0.34.1"
+rustyline = "18.0.0"

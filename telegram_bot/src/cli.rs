@@ -1,7 +1,9 @@
 use futures::StreamExt;
 use std::io::{self, Write};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use termimad::MadSkin;
+use rustyline::{DefaultEditor};
 
 use adk_runner::EventsCompactionConfig;
 use adk_rust::Agent;
@@ -56,52 +58,98 @@ Type a message to chat. /exit to quit.
     let runner = Runner::builder()
         .app_name(app_name)
         .agent(agent)
-        .session_service(sessions)
+        .session_service(sessions.clone())
         .compaction_config(compaction_config)
         .build()?;
 
-    let mut input = String::new();
+    let mut rl = DefaultEditor::new()?;
+    // Optional: persist history
+    let _ = rl.load_history(".cli_history");
+
     let mut response_buffer = String::new();
     let skin = MadSkin::default();
     loop {
-        print!("You> ");
-        io::stdout().flush()?;
+        let readline = rl.readline("You> ");
+        match readline {
+            Ok(line) => {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    continue;
+                }
+                if trimmed == "/exit" || trimmed == "exit" {
+                    break;
+                }
+                if trimmed == "/clean" {
+                    print!("\x1B[2J\x1B[1;1H");
+                    io::stdout().flush().ok();
+                    continue;
+                }
+                if trimmed == "/clear" {
+                    let _ = sessions.delete(adk_session::DeleteRequest {
+                        app_name: app_name.to_string(),
+                        user_id: user_id.to_string(),
+                        session_id: session_id.to_string(),
+                    }).await;
+                    let _ = sessions.create(CreateRequest {
+                        app_name: app_name.to_string(),
+                        user_id: user_id.to_string(),
+                        session_id: Some(session_id.to_string()),
+                        state: Default::default(),
+                    }).await;
+                    println!("Session cleared.");
+                    continue;
+                }
+                let _ = rl.add_history_entry(trimmed);
+                let _ = rl.save_history(".cli_history");
 
-        input.clear();
-        let bytes_read = io::stdin().read_line(&mut input)?;
-        if bytes_read == 0 {
-            break;
-        }
+                let content = Content::new("user").with_text(trimmed);
+                let mut stream = runner.run_str(user_id, session_id, content).await?;
 
-        let trimmed = input.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-        if trimmed == "/exit" || trimmed == "exit" {
-            break;
-        }
+                response_buffer.clear();
+                print!("Agent> ");
+                
+                // Thinking indicator
+                let is_thinking = Arc::new(AtomicBool::new(true));
+                let indicator = is_thinking.clone();
+                let handle = tokio::spawn(async move {
+                    let spinner = ['|', '/', '-', '\\'];
+                    let mut i = 0;
+                    while indicator.load(Ordering::Relaxed) {
+                        print!("\rAgent> [{}]", spinner[i % 4]);
+                        io::stdout().flush().ok();
+                        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                        i += 1;
+                    }
+                    // Clear the line
+                    print!("\r\x1B[K");
+                    io::stdout().flush().ok();
+                });
 
-        let content = Content::new("user").with_text(trimmed);
-        let mut stream = runner.run_str(user_id, session_id, content).await?;
+                while let Some(result) = stream.next().await {
+                    let event = result?;
 
-        response_buffer.clear();
-        print!("Agent> ");
-        io::stdout().flush()?;
-
-        while let Some(result) = stream.next().await {
-            let event = result?;
-
-            if let Some(content) = &event.llm_response.content {
-                for part in &content.parts {
-                    if let Some(text) = part.text() {
-                        response_buffer.push_str(text);
+                    if let Some(content) = &event.llm_response.content {
+                        for part in &content.parts {
+                            if let Some(text) = part.text() {
+                                response_buffer.push_str(text);
+                            }
+                        }
                     }
                 }
+                is_thinking.store(false, Ordering::Relaxed);
+                handle.await?;
+                println!();
+                skin.print_text(&response_buffer);
+                println!();
+            }
+            Err(rustyline::error::ReadlineError::Interrupted) | Err(rustyline::error::ReadlineError::Eof) => {
+                break;
+            }
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+                break;
             }
         }
-        println!();
-        skin.print_text(&response_buffer);
-        println!();
     }
 
     Ok(())

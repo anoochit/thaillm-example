@@ -1,6 +1,6 @@
 ---
 name: joke-generator
-description: Generate a fun, appropriate joke for the user. Use when the user asks for a joke, needs a laugh, or to lighten the mood.
+description: Use this skill when the user explicitly requests humor, needs a break from a complex task, or the conversation tone feels overly formal and could benefit from a lighthearted moment.
 ---
 
 # Joke Generator
