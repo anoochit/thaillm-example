@@ -13,7 +13,7 @@ This repository is organized into several modules, each catering to different de
 | [**Rust OpenAI**](./rust_openai) | Rust agent using OpenAI-compatible client. | Uses built-in `adk-rust` OpenAI client for compatible ThaiLLM endpoints. |
 | [**LiteLLM Proxy**](./litellm_proxy) | OpenAI-compatible proxy layer using LiteLLM. | Standardizes various Thai LLM providers into a single OpenAI-compatible endpoint. |
 | [**Python Proxy**](./python_proxy) | Specialized LiteLLM configuration and scripts. | Custom proxy logic for Typhoon and other Thai LLM services. |
-| [**Telegram Bot**](./telegram_bot) | AI-powered Telegram bot with database and tool use. | Multi-user sessions, Filesystem, Current Datetime, Knowledge Management, Memory, Shell & Weather tools, built with `adk-rust` and `teloxide`. |
+| [**Telegram Bot**](https://github.com/anoochit/telegram_bot) | AI-powered Telegram bot with database and tool use. | Multi-user sessions, Filesystem, Current Datetime, Knowledge Management, Memory, Shell & Weather tools, built with `adk-rust` and `teloxide`. |
 
 ## 🖼️ ThaiLLM Telegram Bot Screenshots
 
@@ -78,7 +78,7 @@ cd telegram_bot
 cargo run
 ```
 
-*See [Telegram Bot README](./telegram_bot/README.md) for configuration and deployment.*
+*See [Telegram Bot README](https://github.com/anoochit/telegram_bot/blob/main/README.md) for configuration and deployment.*
 
 ## 🛠️ Supported Models & Providers
 
