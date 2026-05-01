@@ -127,10 +127,14 @@ let model = OpenAIClient::new(config)?;
 **Add tools** — attach ADK function tools to your agent in `src/agent/mod.rs`:
 
 ```rust
+let mut tools = weather_tool::weather_tools();
+tools.extend(web_fetch_tool::web_fetch_tools());
+// add more tools...
+
 let mut builder = LlmAgentBuilder::new("agent")
     .model(Arc::new(model));
 
-for t in my_custom_tools() {
+for t in tools {
     builder = builder.tool(t).into();
 }
 let agent = builder.build()?;
