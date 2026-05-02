@@ -1,1 +1,1 @@
-move to : https://github.com/anoochit/telegram_bot
+move to : https://github.com/anoochit/namiClaw
