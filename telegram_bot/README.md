@@ -1,1 +1,1 @@
-move to : https://github.com/anoochit/namiClaw
+move to : https://github.com/anoochit/nami-core

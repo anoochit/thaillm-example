@@ -68,7 +68,7 @@ python typhoon_proxy.py
 
 *See [LiteLLM Proxy README](./litellm_proxy/README.md) and [Python Proxy README](./python_proxy/README.md) for configuration.*
 
-### 🤖 AI Telegram Bot (namiClaw)
+### 🤖 AI Telegram Bot (nami-core)
 
 An interactive Telegram bot built with Rust that supports multi-user sessions, persistence via database, and advanced tool-use (Filesystem, Current Datetime, Knowledge Management, Memory, Shell, and Weather).
 
@@ -78,7 +78,7 @@ cd telegram_bot
 cargo run
 ```
 
-*See [Telegram Bot (namiClaw) README](https://github.com/anoochit/namiClaw/blob/main/README.md) for configuration and deployment.*
+*See [Telegram Bot (nami-core) README](https://github.com/anoochit/nami-core/blob/main/README.md) for configuration and deployment.*
 
 ## 🛠️ Supported Models & Providers
 
